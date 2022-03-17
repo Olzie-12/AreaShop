@@ -86,3 +86,4 @@ Help translating the plugin into different languages and to keep the translation
 [![Discord-support-chat](https://discordapp.com/api/v6/guilds/342592311122853893/widget.png?style=banner3)](https://discord.gg/84kGMCQ)
 
 [![Donate through PayPal to support development](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VEECV88NG3L5C)
+
