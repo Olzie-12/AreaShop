@@ -18,6 +18,12 @@ public class SignsFeature extends RegionFeature {
 	private final SignManager internalSignManager = new SignManager();
 	private final SignManager globalSignManager;
 	private final SignFactory signFactory;
+
+	public static boolean exists(@Nonnull GeneralRegion region) {
+		ConfigurationSection section = region.getConfig().getConfigurationSection("general.signs");
+		return section != null && !section.getKeys(false).isEmpty();
+	}
+
 	/**
 	 * Constructor.
 	 * @param region The region to bind to
@@ -34,17 +40,18 @@ public class SignsFeature extends RegionFeature {
 		setRegion(region);
 		// Setup current signs
 		ConfigurationSection signSection = region.getConfig().getConfigurationSection("general.signs");
-		if(signSection != null) {
-			for(String signKey : signSection.getKeys(false)) {
-				RegionSign sign = signFactory.createRegionSign(this, signKey);
-				Location location = sign.getLocation();
-				if(location == null) {
-					AreaShop.warn("Sign with key " + signKey + " of region " + region.getName() + " does not have a proper location");
-					continue;
-				}
-				this.globalSignManager.cacheForWorld(location.getWorld()).addSign(sign);
-				this.internalSignManager.addSign(sign);
+		if (signSection == null) {
+			return;
+		}
+		for(String signKey : signSection.getKeys(false)) {
+			RegionSign sign = signFactory.createRegionSign(this, signKey);
+			Location location = sign.getLocation();
+			if(location == null) {
+				AreaShop.warn("Sign with key " + signKey + " of region " + region.getName() + " does not have a proper location");
+				continue;
 			}
+			this.globalSignManager.cacheForWorld(location.getWorld()).addSign(sign);
+			this.internalSignManager.addSign(sign);
 		}
 	}
 

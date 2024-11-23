@@ -7,16 +7,15 @@ import me.wiefferink.areashop.AreaShop;
 import me.wiefferink.areashop.MessageBridge;
 import me.wiefferink.areashop.events.ask.AddingRegionEvent;
 import me.wiefferink.areashop.events.notify.UpdateRegionEvent;
-import me.wiefferink.areashop.interfaces.BukkitInterface;
 import me.wiefferink.areashop.interfaces.WorldGuardInterface;
 import me.wiefferink.areashop.managers.IFileManager;
 import me.wiefferink.areashop.managers.SignLinkerManager;
-import me.wiefferink.areashop.nms.BlockBehaviourHelper;
 import me.wiefferink.areashop.regions.BuyRegion;
 import me.wiefferink.areashop.regions.GeneralRegion;
 import me.wiefferink.areashop.regions.RegionFactory;
 import me.wiefferink.areashop.regions.RentRegion;
 import me.wiefferink.areashop.tools.Materials;
+import me.wiefferink.areashop.tools.SignUtils;
 import me.wiefferink.areashop.tools.Utils;
 import me.wiefferink.bukkitdo.Do;
 import org.bukkit.Chunk;
@@ -42,23 +41,19 @@ import java.util.Set;
 
 public class SignListener implements Listener {
 
-    private final BlockBehaviourHelper behaviourHelper;
     private final AreaShop plugin;
     private final MessageBridge messageBridge;
     private final SignManager signManager;
     private final SignLinkerManager signLinkerManager;
-    private final BukkitInterface bukkitInterface;
     private final WorldGuardInterface worldGuardInterface;
     private final RegionFactory regionFactory;
     private final IFileManager fileManager;
 
     public SignListener(
                         @Nonnull AreaShop plugin,
-                        @Nonnull BlockBehaviourHelper behaviourHelper,
                         @Nonnull RegionFactory regionFactory,
                         @Nonnull MessageBridge messageBridge,
                         @Nonnull SignLinkerManager signLinkerManager,
-                        @Nonnull BukkitInterface bukkitInterface,
                         @Nonnull WorldGuardInterface worldGuardInterface,
                         @Nonnull SignManager signManager,
                         @Nonnull IFileManager fileManager) {
@@ -66,17 +61,17 @@ public class SignListener implements Listener {
         this.signManager = signManager;
         this.signLinkerManager = signLinkerManager;
         this.regionFactory = regionFactory;
-        this.behaviourHelper = behaviourHelper;
         this.plugin = plugin;
-        this.bukkitInterface = bukkitInterface;
         this.worldGuardInterface = worldGuardInterface;
         this.messageBridge = messageBridge;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void regionUpdate(UpdateRegionEvent event) {
-        Optional<SignsFeature> signsFeature = event.getRegion().getFeature(SignsFeature.class);
-        signsFeature.map(SignsFeature::signManager).ifPresent(SignManager::update);
+        if (SignsFeature.exists(event.getRegion())) {
+            SignsFeature signsFeature = event.getRegion().getSignsFeature();
+            signsFeature.signManager().update();
+        }
     }
 
 
@@ -92,14 +87,14 @@ public class SignListener implements Listener {
         if(chunkSigns.isEmpty()) {
             return;
         }
-        chunkSigns.remove(null);
         Do.forAll(chunkSigns, RegionSign::update);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onIndirectSignBreak(BlockPhysicsEvent event) {
+        Block block = event.getBlock();
         // Check if the block is a sign
-        if(!Materials.isSign(event.getBlock().getType()) || behaviourHelper.isBlockValid(event.getBlock())) {
+        if(!Materials.isSign(block.getType()) || block.canPlace(block.getBlockData())) {
             return;
         }
 
@@ -154,24 +149,13 @@ public class SignListener implements Listener {
         if (!(event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
             return;
         }
-
-        // Only care about clicking blocks
-        if(!Materials.isSign(block.getType())) {
+        Optional<RegionSign> optionalRegionSign = getRegionSign(block, event.getPlayer());
+        if (optionalRegionSign.isEmpty()) {
             return;
         }
+        RegionSign regionSign = optionalRegionSign.get();
 
-        // Check if this sign belongs to a region
-        Optional<RegionSign> optional = signManager.signFromLocation(block.getLocation());
-        if(optional.isEmpty()) {
-            return;
-        }
-        RegionSign regionSign = optional.get();
-
-        // Ignore players that are in sign link mode (which will handle the event itself)
         Player player = event.getPlayer();
-        if(signLinkerManager.isInSignLinkMode(player)) {
-            return;
-        }
 
         // Get the clicktype
         GeneralRegion.ClickType clickType = null;
@@ -189,6 +173,21 @@ public class SignListener implements Listener {
 
         // Only cancel event if at least one command has been executed
         event.setCancelled(ran);
+    }
+
+    private Optional<RegionSign> getRegionSign(@Nonnull Block block, @Nonnull Player player) {
+        // Only care about clicking blocks
+        if(!Materials.isSign(block.getType())) {
+            return Optional.empty();
+        }
+
+        // Ignore players that are in sign link mode (which will handle the event itself)
+        if(signLinkerManager.isInSignLinkMode(player)) {
+            return Optional.empty();
+        }
+
+        // Check if this sign belongs to a region
+        return signManager.signFromLocation(block.getLocation());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -292,7 +291,7 @@ public class SignListener implements Listener {
                 if(durationSet) {
                     rent.setDuration(thirdLine);
                 }
-                rent.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), bukkitInterface.getSignFacing(event.getBlock()), null);
+                rent.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), SignUtils.getSignFacing(event.getBlock()), null);
 
                 AddingRegionEvent addingRegionEvent = plugin.getFileManager().addRegion(rent);
                 if (addingRegionEvent.isCancelled()) {
@@ -392,7 +391,7 @@ public class SignListener implements Listener {
                 if(priceSet) {
                     buy.setPrice(price);
                 }
-                buy.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), bukkitInterface.getSignFacing(event.getBlock()), null);
+                buy.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), SignUtils.getSignFacing(event.getBlock()), null);
 
                 AddingRegionEvent addingRegionEvent = plugin.getFileManager().addRegion(buy);
                 if (addingRegionEvent.isCancelled()) {
@@ -438,10 +437,10 @@ public class SignListener implements Listener {
             }
 
             if(thirdLine == null || thirdLine.isEmpty()) {
-                region.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), bukkitInterface.getSignFacing(event.getBlock()), null);
+                region.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), SignUtils.getSignFacing(event.getBlock()), null);
                 messageBridge.message(player, "addsign-success", region);
             } else {
-                region.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), bukkitInterface.getSignFacing(event.getBlock()), thirdLine);
+                region.getSignsFeature().addSign(event.getBlock().getLocation(), event.getBlock().getType(), SignUtils.getSignFacing(event.getBlock()), thirdLine);
                 messageBridge.message(player, "addsign-successProfile", thirdLine, region);
             }
 

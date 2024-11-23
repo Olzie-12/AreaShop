@@ -1,12 +1,14 @@
 package me.wiefferink.areashop.managers;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import me.wiefferink.areashop.AreaShop;
 import me.wiefferink.areashop.MessageBridge;
 import me.wiefferink.areashop.features.signs.RegionSign;
 import me.wiefferink.areashop.features.signs.SignManager;
-import me.wiefferink.areashop.interfaces.BukkitInterface;
 import me.wiefferink.areashop.regions.GeneralRegion;
 import me.wiefferink.areashop.tools.Materials;
+import me.wiefferink.areashop.tools.SignUtils;
 import me.wiefferink.areashop.tools.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -23,8 +25,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.BlockIterator;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,8 +40,6 @@ public class SignLinkerManager extends Manager implements Listener {
 
 	@Inject
 	private AreaShop plugin;
-	@Inject
-	private BukkitInterface bukkitInterface;
 	@Inject
 	private SignManager signManager;
 	@Inject
@@ -113,7 +111,7 @@ public class SignLinkerManager extends Manager implements Listener {
 					Block next = blockIterator.next();
 					List<GeneralRegion> regions = Utils.getRegions(next.getLocation());
 					if(regions.size() == 1) {
-						linker.setRegion(regions.get(0));
+						linker.setRegion(regions.getFirst());
 						return;
 					} else if(regions.size() > 1) {
 						Set<String> names = new HashSet<>();
@@ -147,7 +145,7 @@ public class SignLinkerManager extends Manager implements Listener {
 					messageBridge.message(player, "linksigns-alreadyRegistered", regionSign.getRegion());
 					return;
 				}
-				linker.setSign(block.getLocation(), block.getType(), bukkitInterface.getSignFacing(block));
+				linker.setSign(block.getLocation(), block.getType(), SignUtils.getSignFacing(block));
 			}
 		}
 	}
