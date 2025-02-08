@@ -31,7 +31,7 @@ dependencies {
     api("com.google.inject.extensions:guice-assistedinject:7.0.0") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-paper:2.0.0-beta.9") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
         exclude("com.google.guava")
     }
     implementation("org.incendo:cloud-processors-confirmation:1.0.0-beta.3") {
@@ -130,15 +130,15 @@ tasks {
         // Configure the Minecraft version for our task.
         // This is the only required configuration besides applying the plugin.
         // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.21")
+        minecraftVersion("1.21.1")
 
         downloadPlugins {
             github("EssentialsX", "essentials", "2.20.1", "EssentialsX-2.20.1.jar")
             github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
-            // WorldEdit 7.3.3
-            url("https://mediafilez.forgecdn.net/files/5400/331/worldedit-bukkit-7.3.3.jar")
-            // WorldGuard 7.0.10
-            url("https://mediafilez.forgecdn.net/files/5344/377/worldguard-bukkit-7.0.10-dist.jar")
+            // WorldEdit 7.3.9
+            url("https://mediafilez.forgecdn.net/files/5935/693/worldedit-bukkit-7.3.9.jar")
+            // WorldGuard 7.0.12
+            url("https://mediafilez.forgecdn.net/files/5719/698/worldguard-bukkit-7.0.12-dist.jar")
         }
     }
 }
