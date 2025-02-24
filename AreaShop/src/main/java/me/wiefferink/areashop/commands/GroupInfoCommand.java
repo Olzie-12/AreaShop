@@ -75,7 +75,7 @@ public class GroupInfoCommand extends AreashopCommandBean {
             throw new AreaShopCommandException("groupinfo-noMembers", group.getName());
         }
         String seperatedMembers = Utils.createCommaSeparatedList(members);
-        this.messageBridge.message(context.sender(), "groupinfo-members", group.getName(), seperatedMembers);
+        this.messageBridge.message(context.sender().sender(), "groupinfo-members", group.getName(), seperatedMembers);
     }
 
 }
