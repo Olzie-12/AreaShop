@@ -147,14 +147,14 @@ public class AreashopCommands {
     private void initCommandManager() {
         ExceptionController<CommandSource<?>> exceptionController = this.commandManager.exceptionController();
         // We need to unwrap ArgumentParseException because they wrap the custom exception messages
-        exceptionController.registerHandler(ArgumentParseException.class,
-                ExceptionHandler.unwrappingHandler(AreaShopCommandException.class));
-        exceptionController.registerHandler(CommandExecutionException.class,
-                ExceptionHandler.unwrappingHandler(AreaShopCommandException.class));
         exceptionController.registerHandler(InvalidCommandSenderException.class,
                 new InvalidCommandSenderHandler(this.messageBridge));
         exceptionController.registerHandler(AreaShopCommandException.class,
                 new ArgumentParseExceptionHandler<>(this.messageBridge));
+        exceptionController.registerHandler(ArgumentParseException.class,
+                ExceptionHandler.unwrappingHandler(AreaShopCommandException.class));
+        exceptionController.registerHandler(CommandExecutionException.class,
+                ExceptionHandler.unwrappingHandler(AreaShopCommandException.class));
         var confirmationConfiguration = ConfirmationConfiguration.<CommandSource<?>>builder()
                 .cache(GuavaCache.of(CacheBuilder.newBuilder().build()))
                 .noPendingCommandNotifier(x -> {
